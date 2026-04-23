@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hệ Thống Quản Lý Bệnh Nhân</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #2563eb;
+      --primary-dark:  #1d4ed8;
+      --danger:        #dc2626;
+      --danger-dark:   #991b1b;
+      --success:       #16a34a;
+      --bg:            #ffffff;
+      --surface:       #ffffff;
+      --surface2:      #f3f4f6;
+      --border:        #e5e7eb;
+      --text:          #1f2937;
+      --text-muted:    #6b7280;
+      --radius:        12px;
+      --shadow:        0 4px 24px rgba(0,0,0,.1);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Screen switching ─────────────────────────────── */
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Navbar ───────────────────────────────────────── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+    .nav-brand .icon { font-size: 1.4rem; }
+    .btn-back {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: .4rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-back:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── HOME SCREEN ──────────────────────────────────── */
+    #home {
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    .home-hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .home-hero .big-icon {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    .home-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .home-hero p {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+      max-width: 400px;
+    }
+    .card-grid {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .module-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.5rem;
+      cursor: pointer;
+      transition: all .25s;
+      text-align: center;
+      min-width: 200px;
+      box-shadow: var(--shadow);
+    }
+    .module-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(79,142,247,.25);
+    }
+    .module-card .card-icon { font-size: 2.4rem; margin-bottom: .8rem; }
+    .module-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .module-card p { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; }
+
+    /* ── PATIENT SCREEN ───────────────────────────────── */
+    .page-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+    .page-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .page-header p  { color: var(--text-muted); font-size: .875rem; margin-top: .2rem; }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+    .search-bar input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .7rem 1.1rem;
+      font-size: .95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-bar input:focus { border-color: var(--primary); }
+    .search-bar input::placeholder { color: var(--text-muted); }
+    .btn-search {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: .7rem 1.4rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-search:hover { background: var(--primary-dark); }
+    .btn-add {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: .7rem 1.2rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-add:hover { background: #16a34a; }
+
+    /* Table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background: var(--surface2);
+    }
+    th {
+      text-align: left;
+      padding: .85rem 1.1rem;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .9rem 1.1rem;
+      font-size: .9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: var(--surface2); }
+
+    .badge-ma {
+      background: rgba(79,142,247,.15);
+      color: var(--primary);
+      border-radius: 6px;
+      padding: .2rem .55rem;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .action-btns { display: flex; gap: .5rem; }
+    .btn-edit {
+      background: rgba(79,142,247,.15);
+      color: var(--primary);
+      border: 1px solid rgba(79,142,247,.3);
+      border-radius: 7px;
+      padding: .35rem .8rem;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-edit:hover { background: var(--primary); color: #fff; }
+    .btn-del {
+      background: rgba(239,68,68,.12);
+      color: var(--danger);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 7px;
+      padding: .35rem .8rem;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-del:hover { background: var(--danger); color: #fff; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+
+    /* Status bar */
+    .status-bar {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-bottom: .75rem;
+    }
+
+    /* ── MODAL ────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6);
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: .8rem; font-weight: 500; color: var(--text-muted); margin-bottom: .35rem; }
+    .form-group input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .65rem .9rem;
+      font-size: .9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--primary); }
+    .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-cancel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: .6rem 1.2rem;
+      font-size: .875rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-cancel:hover { color: var(--text); }
+    .btn-save {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      padding: .6rem 1.4rem;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-save:hover { background: var(--primary-dark); }
+
+    /* ── Toast ────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1.25rem;
+      font-size: .875rem;
+      box-shadow: var(--shadow);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { border-color: var(--success); color: var(--success); }
+    #toast.error   { border-color: var(--danger);  color: var(--danger);  }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     HOME SCREEN
+═══════════════════════════════════════ -->
+<div id="home" class="screen active">
+  <nav>
+    <div class="nav-brand">
+      <span class="icon">🏥</span>
+      <span>MedSystem</span>
+    </div>
+  </nav>
+  <div class="home-hero">
+    <div class="big-icon">🏥</div>
+    <h1>Hệ Thống Quản Lý<br/>Bệnh Nhân</h1>
+    <p>Quản lý thông tin bệnh nhân một cách nhanh chóng và hiệu quả</p>
+    <div class="card-grid">
+      <div class="module-card" onclick="showScreen('patients')">
+        <div class="card-icon">👤</div>
+        <h3>Quản Lý Bệnh Nhân</h3>
+        <p>Xem, thêm, sửa, xóa thông tin</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PATIENT MANAGEMENT SCREEN
+═══════════════════════════════════════ -->
+<div id="patients" class="screen">
+  <nav>
+    <div class="nav-brand">
+      <span class="icon">🏥</span>
+      <span>MedSystem</span>
+    </div>
+    <button class="btn-back" onclick="showScreen('home')">← Trang chủ</button>
+  </nav>
+
+  <div class="page-content">
+    <div class="page-header">
+      <h2>👤 Quản Lý Bệnh Nhân</h2>
+      <p>Tìm kiếm và quản lý thông tin bệnh nhân</p>
+    </div>
+
+    <!-- Search + Add -->
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="🔍  Nhập tên bệnh nhân để tìm kiếm..."
+             onkeydown="if(event.key==='Enter') searchPatients()"/>
+      <button class="btn-search" onclick="searchPatients()">🔍 Tìm kiếm</button>
+      <button class="btn-add" onclick="openAddModal()">＋ Thêm mới</button>
+    </div>
+
+    <div class="status-bar" id="statusBar"></div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Mã BN</th>
+            <th>Tên bệnh nhân</th>
+            <th>Số điện thoại</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="patientTable">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <div>Nhập tên để tìm kiếm bệnh nhân</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Add / Edit Patient
+═══════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">➕ Thêm bệnh nhân</h3>
+    <input type="hidden" id="editId"/>
+    <div class="form-group">
+      <label>Tên bệnh nhân *</label>
+      <input id="fieldTen" type="text" placeholder="Nguyễn Văn A"/>
+    </div>
+    <div class="form-group">
+      <label>Mã bệnh nhân *</label>
+      <input id="fieldMa" type="text" placeholder="BN001"/>
+    </div>
+    <div class="form-group">
+      <label>Số điện thoại *</label>
+      <input id="fieldSDT" type="text" placeholder="0901234567"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Huỷ</button>
+      <button class="btn-save" onclick="savePatient()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8080/patients';
+
+  // ── Screen navigation ──────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id === 'patients') initPatientScreen();
+  }
+
+  function initPatientScreen() {
+    const tbody = document.getElementById('patientTable');
+    const bar   = document.getElementById('statusBar');
+    bar.textContent = '';
+    tbody.innerHTML = `<tr><td colspan="5">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div>Nhập tên để tìm kiếm bệnh nhân</div>
+      </div></td></tr>`;
+  }
+
+  // ── Search ─────────────────────────────────────────────
+  async function searchPatients() {
+    const name = document.getElementById('searchInput').value.trim();
+    if (!name) {
+      showToast('Vui lòng nhập tên bệnh nhân để tìm kiếm', 'error');
+      return;
+    }
+    try {
+      const res  = await fetch(`${API}?name=${encodeURIComponent(name)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid response format');
+      renderTable(data);
+    } catch (e) {
+      console.error('Search error:', e);
+      showToast('Không thể kết nối tới server: ' + (e?.message || 'Unknown error'), 'error');
+      renderTable([]);
+    }
+  }
+
+  function renderTable(list) {
+    const tbody = document.getElementById('patientTable');
+    const bar   = document.getElementById('statusBar');
+    if (!list.length) {
+      bar.textContent = 'Không tìm thấy bệnh nhân nào.';
+      tbody.innerHTML = `<tr><td colspan="5">
+        <div class="empty-state">
+          <div class="empty-icon">😕</div>
+          <div>Không có bệnh nhân nào phù hợp</div>
+        </div></td></tr>`;
+      return;
+    }
+    bar.textContent = `Tìm thấy ${list.length} bệnh nhân`;
+    tbody.innerHTML = list.map((p, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><span class="badge-ma">${p.ma}</span></td>
+        <td>${p.ten}</td>
+        <td>${p.SDT}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-edit" onclick="openEditModal(${p.id},'${esc(p.ten)}','${esc(p.ma)}','${esc(p.SDT)}')">✏️ Sửa</button>
+            <button class="btn-del"  onclick="deletePatient(${p.id},'${esc(p.ten)}')">🗑 Xoá</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  const esc = s => (s || '').replace(/'/g, "\\'");
+
+  // ── Modal helpers ──────────────────────────────────────
+  function openAddModal() {
+    document.getElementById('modalTitle').textContent = '➕ Thêm bệnh nhân';
+    document.getElementById('editId').value   = '';
+    document.getElementById('fieldTen').value = '';
+    document.getElementById('fieldMa').value  = '';
+    document.getElementById('fieldSDT').value = '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function openEditModal(id, ten, ma, sdt) {
+    document.getElementById('modalTitle').textContent  = '✏️ Sửa bệnh nhân';
+    document.getElementById('editId').value    = id;
+    document.getElementById('fieldTen').value  = ten;
+    document.getElementById('fieldMa').value   = ma;
+    document.getElementById('fieldSDT').value  = sdt;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  // ── Save (create / update) ─────────────────────────────
+  async function savePatient() {
+    const id  = document.getElementById('editId').value;
+    const ten = document.getElementById('fieldTen').value.trim();
+    const ma  = document.getElementById('fieldMa').value.trim();
+    const sdt = document.getElementById('fieldSDT').value.trim();
+
+    if (!ten || !ma || !sdt) { showToast('Vui lòng điền đầy đủ thông tin', 'error'); return; }
+
+    const body    = JSON.stringify({ ten, ma, SDT: sdt });
+    const isEdit  = !!id;
+    const url     = isEdit ? `${API}/${id}` : API;
+    const method  = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error Response:', JSON.stringify(errData, null, 2));
+        console.error('Request body was:', body);
+        // Handle field errors (validation)
+        if (errData.messages && typeof errData.messages === 'object') {
+          const fieldErrors = Object.values(errData.messages).join(', ');
+          throw new Error(fieldErrors);
+        }
+        throw new Error(errData.message || `HTTP ${res.status}`);
+      }
+      showToast(isEdit ? 'Cập nhật thành công!' : 'Thêm bệnh nhân thành công!', 'success');
+      closeModal();
+      searchPatients();
+    } catch (err) {
+      console.error('Save error:', err);
+      showToast('Lưu thất bại: ' + err.message, 'error');
+    }
+  }
+
+  // ── Delete ─────────────────────────────────────────────
+  async function deletePatient(id, ten) {
+    if (!confirm(`Bạn có chắc muốn xoá bệnh nhân "${ten}"?`)) return;
+    try {
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `HTTP ${res.status}`);
+      }
+      showToast('Xoá thành công!', 'success');
+      searchPatients();
+    } catch (err) {
+      console.error('Delete error:', err);
+      showToast('Xoá thất bại: ' + (err?.message || 'Unknown error'), 'error');
+    }
+  }
+
+  // ── Toast ──────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = `show ${type}`;
+    setTimeout(() => { t.className = ''; }, 3000);
+  }
+
+  // Close modal on overlay click
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+</script>
+</body>
+</html>
