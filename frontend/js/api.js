@@ -28,6 +28,12 @@ const API = {
         return res.json();
     },
 
+    async getBookedDoctorIds(timeSlotId, date) {
+        const res = await fetch(`/api/tickets/booked-doctors?timeSlotId=${timeSlotId}&date=${date}`);
+        if (!res.ok) return [];
+        return res.json();
+    },
+
     // ─── Booking Service ────────────────────────────────────────────────────
     async createTicket(data) {
         const res = await fetch('/api/tickets', {

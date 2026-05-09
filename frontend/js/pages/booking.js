@@ -141,19 +141,28 @@ async function renderStep2(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Đang tải danh sách bác sĩ...</div>';
 
     let doctors = [];
+    let bookedIds = [];
     try {
-        doctors = await API.getDoctorsByTimeSlot(bookingState.timeSlotId);
+        [doctors, bookedIds] = await Promise.all([
+            API.getDoctorsByTimeSlot(bookingState.timeSlotId),
+            API.getBookedDoctorIds(bookingState.timeSlotId, bookingState.date),
+        ]);
     } catch (e) {
         container.innerHTML = '<div class="alert alert-error">Không thể tải danh sách bác sĩ</div>';
         return;
     }
 
-    if (doctors.length === 0) {
+    // Filter out doctors that already have an APPROVED booking on this date+timeslot
+    const bookedSet = new Set(bookedIds);
+    const availableDoctors = doctors.filter(doc => !bookedSet.has(doc.id));
+
+    if (availableDoctors.length === 0) {
         container.innerHTML = `
             <h2>Bước 2: Chọn bác sĩ</h2>
             <div class="empty-state">
                 <span class="empty-icon">👨‍⚕️</span>
-                <p>Không có bác sĩ nào làm việc ở ${bookingState.timeSlotName}</p>
+                <p>Không còn bác sĩ nào khả dụng trong <strong>${bookingState.timeSlotName}</strong> ngày <strong>${bookingState.date}</strong></p>
+                <p style="font-size:13px;margin-top:8px">Vui lòng chọn ngày hoặc ca khám khác.</p>
             </div>
             <button class="btn btn-outline" id="back-step2">← Quay lại</button>
         `;
@@ -167,7 +176,7 @@ async function renderStep2(container) {
     container.innerHTML = `
         <h2>Bước 2: Chọn bác sĩ — ${bookingState.timeSlotName}</h2>
         <div class="options-grid" id="doctor-options">
-            ${doctors.map(doc => `
+            ${availableDoctors.map(doc => `
                 <div class="option-card ${bookingState.doctorId === doc.id ? 'selected' : ''}" data-id="${doc.id}" data-name="${doc.name}" data-spec="${doc.specialization}">
                     <div class="option-title">👨‍⚕️ ${doc.name}</div>
                     <div class="option-detail">${doc.specialization}</div>

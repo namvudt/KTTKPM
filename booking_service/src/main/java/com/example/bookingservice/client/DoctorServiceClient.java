@@ -56,4 +56,32 @@ public class DoctorServiceClient {
             return true;
         }
     }
+
+    /**
+     * Get the maximum number of patients allowed per doctor for a given time slot.
+     * Calls GET /timeslots/{id} on Doctor Service.
+     *
+     * @param timeSlotId the time slot ID
+     * @return maxPatients value, defaults to 1 if the call fails
+     */
+    @SuppressWarnings("unchecked")
+    public int getTimeSlotMaxPatients(Long timeSlotId) {
+        try {
+            String url = doctorServiceUrl + "/timeslots/" + timeSlotId;
+            log.info("Calling Doctor Service for timeslot capacity: GET {}", url);
+
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Object maxP = response.get("maxPatients");
+
+            if (maxP instanceof Number) {
+                int capacity = ((Number) maxP).intValue();
+                log.info("TimeSlot {} maxPatients={}", timeSlotId, capacity);
+                return capacity;
+            }
+            return 1;
+        } catch (Exception e) {
+            log.warn("Could not get maxPatients for timeSlot {}: {}. Falling back to 1", timeSlotId, e.getMessage());
+            return 1; // safe fallback — treat as single-patient slot
+        }
+    }
 }

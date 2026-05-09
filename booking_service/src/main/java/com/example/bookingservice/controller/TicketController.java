@@ -98,6 +98,19 @@ public class TicketController {
     }
 
     /**
+     * Get IDs of doctors already booked (APPROVED) for a given time slot and date.
+     * Used by frontend to filter available doctors before booking.
+     * GET /tickets/booked-doctors?timeSlotId=1&date=2026-05-07
+     */
+    @GetMapping("/booked-doctors")
+    public ResponseEntity<List<Long>> getBookedDoctorIds(
+            @RequestParam Long timeSlotId,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+        return ResponseEntity.ok(bookingService.getBookedDoctorIds(timeSlotId, date));
+    }
+
+    /**
      * Update a ticket (only allowed in NEW state).
      * PUT /tickets/{id}
      */

@@ -71,6 +71,12 @@ async function loadHistory(patient, navigate, logout) {
                 const ticketId = btn.dataset.ticketId;
                 const action = btn.dataset.action;
 
+                if (action === 'view') {
+                    const ticket = tickets.find(t => t.id == ticketId);
+                    showDetailModal(ticket);
+                    return;
+                }
+
                 if (action === 'edit') {
                     const ticket = tickets.find(t => t.id == ticketId);
                     showEditForm(ticket, patient, navigate, logout);
@@ -236,17 +242,87 @@ function renderBadge(state) {
 }
 
 function renderActions(ticket) {
+    const viewBtn = `<button class="btn btn-sm btn-outline" data-action="view" data-ticket-id="${ticket.id}"> Xem</button>`;
+
     if (ticket.state === 'NEW') {
         return `
+            ${viewBtn}
             <button class="btn btn-sm btn-info" data-action="edit" data-ticket-id="${ticket.id}">✏️ Sửa</button>
             <button class="btn btn-sm btn-success" data-action="confirm" data-ticket-id="${ticket.id}">Xác nhận</button>
             <button class="btn btn-sm btn-danger" data-action="cancel" data-ticket-id="${ticket.id}">Hủy</button>
         `;
     }
     if (ticket.state === 'PENDING') {
-        return '<span style="color:var(--text-muted);font-size:12px">Đang chờ duyệt</span>';
+        return viewBtn;
     }
-    return '<span style="color:var(--text-muted);font-size:12px">—</span>';
+    return viewBtn;
+}
+
+function showDetailModal(ticket) {
+    const existing = document.getElementById('ticket-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'ticket-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>📋 Chi tiết phiếu khám #${ticket.id}</h2>
+                <button class="modal-close" id="modal-close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Mã phiếu</span>
+                        <span class="detail-value">#${ticket.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Trạng thái</span>
+                        <span class="detail-value">${renderBadge(ticket.state)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Họ tên</span>
+                        <span class="detail-value">${ticket.name || '—'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Số điện thoại</span>
+                        <span class="detail-value">${ticket.phone || '—'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Ngày khám</span>
+                        <span class="detail-value">📅 ${ticket.date}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Ca khám (ID)</span>
+                        <span class="detail-value">Ca #${ticket.timeSlotId || '—'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Bác sĩ (ID)</span>
+                        <span class="detail-value">👨‍⚕️ Bác sĩ #${ticket.doctorId || '—'}</span>
+                    </div>
+                    <div class="detail-item detail-item-full">
+                        <span class="detail-label">Mô tả triệu chứng</span>
+                        <span class="detail-value">${ticket.description || '—'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('visible'));
+
+    document.getElementById('modal-close-btn').addEventListener('click', () => {
+        modal.classList.remove('visible');
+        setTimeout(() => modal.remove(), 250);
+    });
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('visible');
+            setTimeout(() => modal.remove(), 250);
+        }
+    });
 }
 
 function bindSidebar(navigate, logout) {

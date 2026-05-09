@@ -1,0 +1,110 @@
+# ============================================
+# 1. Secret — MySQL root password
+# ============================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: healthcare
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: MTIzNDU2    # base64 of "123456"
+
+---
+# ============================================
+# 2. ConfigMap — Init script tạo 3 databases
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: healthcare
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS patient_db;
+    CREATE DATABASE IF NOT EXISTS doctor_db;
+    CREATE DATABASE IF NOT EXISTS booking_db;
+
+---
+# ============================================
+# 3. PersistentVolumeClaim — Lưu trữ dữ liệu
+# ============================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: healthcare
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# ============================================
+# 4. Deployment — MySQL 8.0
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  namespace: healthcare
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-init
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: mysql-init
+        configMap:
+          name: mysql-init-script
+
+---
+# ============================================
+# 5. Service — MySQL (ClusterIP nội bộ)
+# ============================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: healthcare
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: mysql

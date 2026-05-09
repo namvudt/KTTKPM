@@ -26,6 +26,14 @@ public class TimeSlot {
     @Column(nullable = false)
     private String endTime;
 
+    /**
+     * Maximum number of patients that can be booked per doctor in this slot per day.
+     * Default is 1 (one patient per doctor per slot).
+     * Increase this to allow multiple patients per doctor in the same time slot.
+     */
+    @Column(nullable = false, columnDefinition = "INT NOT NULL DEFAULT 1")
+    private int maxPatients = 1;
+
     // ─── Constructors ──────────────────────────────────────────────────────────
 
     public TimeSlot() {}
@@ -34,6 +42,14 @@ public class TimeSlot {
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.maxPatients = 1;
+    }
+
+    public TimeSlot(String name, String startTime, String endTime, int maxPatients) {
+        this.name = name;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.maxPatients = maxPatients;
     }
 
     // ─── Getters & Setters ─────────────────────────────────────────────────────
@@ -49,4 +65,7 @@ public class TimeSlot {
 
     public String getEndTime() { return endTime; }
     public void setEndTime(String endTime) { this.endTime = endTime; }
+
+    public int getMaxPatients() { return maxPatients; }
+    public void setMaxPatients(int maxPatients) { this.maxPatients = maxPatients; }
 }

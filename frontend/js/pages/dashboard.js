@@ -35,24 +35,12 @@ export async function renderDashboard(app, navigate, patient, logout) {
                     </div>
                 </div>
 
-                <div class="quick-actions">
-                    <div class="action-card" id="action-booking">
-                        <span class="action-icon">📅</span>
-                        <div class="action-title">Đặt lịch khám</div>
-                        <div class="action-desc">Chọn ca khám, bác sĩ và đặt lịch hẹn mới</div>
-                    </div>
-                    <div class="action-card" id="action-history">
-                        <span class="action-icon">📜</span>
-                        <div class="action-title">Xem lịch sử</div>
-                        <div class="action-desc">Xem tất cả các lịch khám đã đặt trước đó</div>
-                    </div>
-                </div>
+
             </div>
         </div>
     `;
 
-    document.getElementById('action-booking').addEventListener('click', () => navigate('booking'));
-    document.getElementById('action-history').addEventListener('click', () => navigate('history'));
+
     bindSidebar(navigate, logout);
 }
 
